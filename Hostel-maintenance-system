@@ -1,0 +1,238 @@
+FRONTEND 
+  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fix What Matters First</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f4f7;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #1f2937;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    h2 {
+      color: #1f2937;
+    }
+
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 450px;
+      margin-bottom: 30px;
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+    }
+
+    button {
+      background: #16a34a;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #15803d;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background: #374151;
+      color: white;
+    }
+
+    .Critical { background: #fecaca; }
+    .High { background: #fde68a; }
+    .Medium { background: #fef9c3; }
+    .Low { background: #dcfce7; }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>Fix What Matters First</h1>
+  <p>Hostel Maintenance Priority System</p>
+</header>
+
+<div class="container">
+
+  <h2>Raise a Complaint</h2>
+
+  <form id="complaintForm">
+    <input type="text" id="name" placeholder="Student Name" required>
+    <input type="text" id="room" placeholder="Room Number" required>
+
+    <select id="issue" required>
+      <option value="">Select Issue</option>
+      <option value="Electrical">Electrical</option>
+      <option value="Water">Water</option>
+      <option value="Sanitation">Sanitation</option>
+      <option value="Furniture">Furniture</option>
+    </select>
+
+    <textarea id="desc" placeholder="Describe the problem" required></textarea>
+
+    <button type="submit">Submit Complaint</button>
+  </form>
+
+  <h2>Warden Dashboard</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Room</th>
+        <th>Issue</th>
+        <th>Priority</th>
+      </tr>
+    </thead>
+    <tbody id="complaintTable"></tbody>
+  </table>
+
+</div>
+
+<script>
+  const form = document.getElementById("complaintForm");
+  const table = document.getElementById("complaintTable");
+
+  function getPriority(issue) {
+    if (issue === "Electrical") return "Critical";
+    if (issue === "Water") return "High";
+    if (issue === "Sanitation") return "Medium";
+    return "Low";
+  }
+
+  form.addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const name = document.getElementById("name").value;
+    const room = document.getElementById("room").value;
+    const issue = document.getElementById("issue").value;
+
+    const priority = getPriority(issue);
+
+    const row = document.createElement("tr");
+    row.className = priority;
+
+    row.innerHTML = `
+      <td>${name}</td>
+      <td>${room}</td>
+      <td>${issue}</td>
+      <td>${priority}</td>
+    `;
+
+    table.appendChild(row);
+    form.reset();
+  });
+</script>
+
+</body>
+</html>
+
+
+
+BACKEND
+
+  const express = require("express");
+const cors = require("cors");
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+let complaints = [];
+
+// Priority logic
+function getPriority(issue, description) {
+  description = description.toLowerCase();
+
+  if (
+    issue === "Electrical" ||
+    description.includes("spark") ||
+    description.includes("shock") ||
+    description.includes("fire")
+  ) {
+    return "Critical";
+  }
+
+  if (
+    issue === "Water" ||
+    description.includes("leak") ||
+    description.includes("overflow")
+  ) {
+    return "High";
+  }
+
+  if (
+    issue === "Sanitation" ||
+    description.includes("dirty") ||
+    description.includes("smell")
+  ) {
+    return "Medium";
+  }
+
+  return "Low";
+}
+
+// Root test
+app.get("/", (req, res) => {
+  res.send("Backend is running");
+});
+
+// Add complaint
+app.post("/complaint", (req, res) => {
+  const { name, room, issue, description } = req.body;
+
+  const priority = getPriority(issue, description);
+
+  complaints.push({
+    name,
+    room,
+    issue,
+    description,
+    priority
+  });
+
+  res.json({ message: "Complaint added successfully" });
+});
+
+// Get complaints
+app.get("/complaints", (req, res) => {
+  res.json(complaints);
+});
+
+// Start server
+app.listen(5000, () => {
+  console.log("Backend running on http://localhost:5000");
+});
